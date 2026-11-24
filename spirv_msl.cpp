@@ -11150,7 +11150,9 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		if (opcode != OpBitcast || is_pointer(type) || is_pointer(input_type))
 		{
 			string op;
-			auto input_expr = to_unpacked_expression(ops[2]);
+			// A pointer that is an lvalue, such as an access chain into what a loaded pointer
+			// points to, stands for the pointee, so its address is what gets cast.
+			auto input_expr = is_pointer(input_type) ? to_pointer_expression(ops[2]) : to_unpacked_expression(ops[2]);
 
 			if ((type.vecsize == 1 || is_pointer(type)) && (input_type.vecsize == 1 || is_pointer(input_type)))
 				op = join("reinterpret_cast<", type_to_glsl(type), ">(", input_expr, ")");
