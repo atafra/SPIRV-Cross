@@ -19266,6 +19266,13 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 	case BuiltInCullPrimitiveEXT:
 		return "primitive_culled";
 
+	// A ray generation shader that traces no rays through a pipeline can run as a compute
+	// kernel, with a thread of the grid for each of its launch
+	case BuiltInLaunchIdKHR:
+		return "thread_position_in_grid";
+	case BuiltInLaunchSizeKHR:
+		return "threads_per_grid";
+
 	default:
 		return "unsupported-built-in";
 	}
@@ -19388,6 +19395,10 @@ string CompilerMSL::builtin_type_decl(BuiltIn builtin, uint32_t id)
 	case BuiltInPrimitiveLineIndicesEXT:
 		return "uint2";
 	case BuiltInPrimitiveTriangleIndicesEXT:
+		return "uint3";
+
+	case BuiltInLaunchIdKHR:
+	case BuiltInLaunchSizeKHR:
 		return "uint3";
 
 	default:
