@@ -67,8 +67,9 @@ static inline __attribute__((always_inline))
 void copy_columns(device SSBOCol& _29, device SSBORow& _41)
 {
     (device float2&)_29.col_major0[1] = float2(_41.row_major0[0][1], _41.row_major0[1][1]);
-    _41.row_major0[0][1] = _29.col_major0[1].x;
-    _41.row_major0[1][1] = _29.col_major0[1].y;
+    float2 _63 = _29.col_major0[1].xy;
+    _41.row_major0[0][1] = _63.x;
+    _41.row_major0[1][1] = _63.y;
 }
 
 static inline __attribute__((always_inline))

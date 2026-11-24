@@ -41,30 +41,35 @@ fragment main0_out main0(main0_in in [[stage_in]], const device type_StructuredB
     float3 _101 = float3(_100.x, _100.y, _70.z);
     _101.z = 1.0;
     uint _103 = in.in_var_TEXCOORD0 * 5u;
+    float3 _106 = CulledObjectBoxBounds._m0[_103].xyz;
     uint _107 = _103 + 1u;
-    if (all(CulledObjectBoxBounds._m0[_107].xy > _96.xy) && all(CulledObjectBoxBounds._m0[_103].xyz < _101))
+    float4 _109 = CulledObjectBoxBounds._m0[_107];
+    if (all(_109.xy > _96.xy) && all(_106 < _101))
     {
-        float3 _121 = float3(0.5) * (CulledObjectBoxBounds._m0[_103].xyz + CulledObjectBoxBounds._m0[_107].xyz);
+        float3 _121 = float3(0.5) * (_106 + _109.xyz);
         float _122 = _96.x;
         float _123 = _96.y;
         float _126 = _100.x;
         float _129 = _100.y;
+        float3 _145 = CulledObjectBoxBounds._m0[_103 + 2u].xyz;
+        float3 _149 = CulledObjectBoxBounds._m0[_103 + 3u].xyz;
+        float3 _153 = CulledObjectBoxBounds._m0[_103 + 4u].xyz;
         float3 _166 = float3(_122, _123, -1000.0) - _121;
-        float3 _170 = float3(dot(_166, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_166, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_166, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _170 = float3(dot(_166, _145), dot(_166, _149), dot(_166, _153));
         float3 _189 = float3(_126, _123, -1000.0) - _121;
-        float3 _193 = float3(dot(_189, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_189, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_189, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _193 = float3(dot(_189, _145), dot(_189, _149), dot(_189, _153));
         float3 _205 = float3(_122, _129, -1000.0) - _121;
-        float3 _209 = float3(dot(_205, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_205, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_205, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _209 = float3(dot(_205, _145), dot(_205, _149), dot(_205, _153));
         float3 _221 = float3(_126, _129, -1000.0) - _121;
-        float3 _225 = float3(dot(_221, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_221, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_221, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _225 = float3(dot(_221, _145), dot(_221, _149), dot(_221, _153));
         float3 _237 = float3(_122, _123, 1.0) - _121;
-        float3 _241 = float3(dot(_237, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_237, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_237, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _241 = float3(dot(_237, _145), dot(_237, _149), dot(_237, _153));
         float3 _253 = float3(_126, _123, 1.0) - _121;
-        float3 _257 = float3(dot(_253, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_253, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_253, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _257 = float3(dot(_253, _145), dot(_253, _149), dot(_253, _153));
         float3 _269 = float3(_122, _129, 1.0) - _121;
-        float3 _273 = float3(dot(_269, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_269, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_269, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _273 = float3(dot(_269, _145), dot(_269, _149), dot(_269, _153));
         float3 _285 = float3(_126, _129, 1.0) - _121;
-        float3 _289 = float3(dot(_285, CulledObjectBoxBounds._m0[_103 + 2u].xyz), dot(_285, CulledObjectBoxBounds._m0[_103 + 3u].xyz), dot(_285, CulledObjectBoxBounds._m0[_103 + 4u].xyz));
+        float3 _289 = float3(dot(_285, _145), dot(_285, _149), dot(_285, _153));
         if (all(fast::min(fast::min(fast::min(fast::min(fast::min(fast::min(fast::min(fast::min(float3(500000.0), _170), _193), _209), _225), _241), _257), _273), _289) < float3(1.0)) && all(fast::max(fast::max(fast::max(fast::max(fast::max(fast::max(fast::max(fast::max(float3(-500000.0), _170), _193), _209), _225), _241), _257), _273), _289) > float3(-1.0)))
         {
             uint _179 = atomic_fetch_add_explicit((device atomic_uint*)&RWShadowTileNumCulledObjects_atomic[(_78 * _Globals.ShadowTileListGroupSize.x) + _83], 1u, memory_order_relaxed);

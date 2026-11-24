@@ -69,9 +69,10 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     device main0_in* gl_in = &spvIn[min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1) * spvIndirectParams[0]];
     uint gl_InvocationID = gl_GlobalInvocationID.x % 4;
     uint gl_PrimitiveID = min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1);
-    gl_out[gl_InvocationID].gl_Position = float4(1.0);
-    Foo[gl_InvocationID] = gl_in[gl_InvocationID].iFoo;
-    if (gl_InvocationID == 0)
+    int _19 = gl_InvocationID;
+    gl_out[_19].gl_Position = float4(1.0);
+    Foo[_19] = gl_in[_19].iFoo;
+    if (_19 == 0)
     {
         spvUnsafeArray<float4, 2> _56 = spvUnsafeArray<float4, 2>({ gl_in[0].ipFoo, gl_in[1].ipFoo });
         patchOut.pFoo = _56;

@@ -86,8 +86,9 @@ vertex main0_out main0(constant type_Globals& _Globals [[buffer(0)]], const devi
         if (_75 < 4u)
         {
             uint _82 = ((5u * _70) + _75) + 1u;
-            _61[_75] = float4(ScatterDrawList._m0[_82].xyz, 0.0);
-            _62[_75] = ScatterDrawList._m0[_82].w;
+            float4 _84 = ScatterDrawList._m0[_82];
+            _61[_75] = float4(_84.xyz, 0.0);
+            _62[_75] = _84.w;
             if (_75 == 0u)
             {
                 _73 = _62[_75];

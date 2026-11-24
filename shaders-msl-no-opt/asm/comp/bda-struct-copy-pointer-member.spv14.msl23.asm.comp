@@ -1,0 +1,175 @@
+; SPIR-V
+; Version: 1.4
+; Generator: Khronos Slang Compiler; 0
+; Bound: 123
+; Schema: 0
+               OpCapability PhysicalStorageBufferAddresses
+               OpCapability Shader
+               OpExtension "SPV_KHR_physical_storage_buffer"
+               OpMemoryModel PhysicalStorageBuffer64 GLSL450
+               OpEntryPoint GLCompute %main "main" %params %gl_GlobalInvocationID
+               OpExecutionMode %main LocalSize 64 1 1
+               OpSource Slang 1
+               OpName %Table "Table"
+               OpMemberName %Table 0 "dir"
+               OpMemberName %Table 1 "size"
+               OpName %Tables "Tables"
+               OpMemberName %Tables 0 "a"
+               OpMemberName %Tables 1 "b"
+               OpName %local "local"
+               OpName %local "local"
+               OpName %Table_natural_logical "Table_natural_logical"
+               OpMemberName %Table_natural_logical 0 "dir"
+               OpMemberName %Table_natural_logical 1 "size"
+               OpName %Tables_natural_logical "Tables_natural_logical"
+               OpMemberName %Tables_natural_logical 0 "a"
+               OpMemberName %Tables_natural_logical 1 "b"
+               OpName %Table_natural "Table_natural"
+               OpMemberName %Table_natural 0 "dir"
+               OpMemberName %Table_natural 1 "size"
+               OpName %Tables_natural "Tables_natural"
+               OpMemberName %Tables_natural 0 "a"
+               OpMemberName %Tables_natural 1 "b"
+               OpName %Params_natural "Params_natural"
+               OpMemberName %Params_natural 0 "tables"
+               OpMemberName %Params_natural 1 "output"
+               OpName %params "params"
+               OpName %lookup "lookup"
+               OpName %tables "tables"
+               OpName %i "i"
+               OpName %lookup_0 "lookup"
+               OpName %main "main"
+               OpDecorate %_ptr_PhysicalStorageBuffer_float ArrayStride 4
+               OpMemberDecorate %Table_natural 0 Offset 0
+               OpMemberDecorate %Table_natural 1 Offset 8
+               OpMemberDecorate %Tables_natural 0 Offset 0
+               OpMemberDecorate %Tables_natural 1 Offset 16
+               OpDecorate %Params_natural Block
+               OpMemberDecorate %Params_natural 0 Offset 0
+               OpMemberDecorate %Params_natural 1 Offset 32
+               OpDecorate %gl_GlobalInvocationID BuiltIn GlobalInvocationId
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+%_ptr_PhysicalStorageBuffer_float = OpTypePointer PhysicalStorageBuffer %float
+       %uint = OpTypeInt 32 0
+      %Table = OpTypeStruct %_ptr_PhysicalStorageBuffer_float %uint
+     %Tables = OpTypeStruct %Table %Table
+%_ptr_Function_Tables = OpTypePointer Function %Tables
+%Table_natural_logical = OpTypeStruct %_ptr_PhysicalStorageBuffer_float %uint
+%Tables_natural_logical = OpTypeStruct %Table_natural_logical %Table_natural_logical
+%_ptr_Function_Tables_natural_logical = OpTypePointer Function %Tables_natural_logical
+%Table_natural = OpTypeStruct %_ptr_PhysicalStorageBuffer_float %uint
+%Tables_natural = OpTypeStruct %Table_natural %Table_natural
+%Params_natural = OpTypeStruct %Tables_natural %_ptr_PhysicalStorageBuffer_float
+%_ptr_PushConstant_Params_natural = OpTypePointer PushConstant %Params_natural
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_PushConstant_Tables_natural = OpTypePointer PushConstant %Tables_natural
+%_ptr_Function_Table_natural_logical = OpTypePointer Function %Table_natural_logical
+%_ptr_Function__ptr_PhysicalStorageBuffer_float = OpTypePointer Function %_ptr_PhysicalStorageBuffer_float
+      %int_1 = OpConstant %int 1
+%_ptr_Function_uint = OpTypePointer Function %uint
+%_ptr_Function_Table = OpTypePointer Function %Table
+     %v3uint = OpTypeVector %uint 3
+%_ptr_Input_v3uint = OpTypePointer Input %v3uint
+     %uint_1 = OpConstant %uint 1
+%_ptr_PushConstant__ptr_PhysicalStorageBuffer_float = OpTypePointer PushConstant %_ptr_PhysicalStorageBuffer_float
+         %68 = OpTypeFunction %float %uint
+%_ptr_PushConstant_Table_natural = OpTypePointer PushConstant %Table_natural
+%_ptr_PushConstant_uint = OpTypePointer PushConstant %uint
+         %98 = OpTypeFunction %float %_ptr_Function_Tables %uint
+     %params = OpVariable %_ptr_PushConstant_Params_natural PushConstant
+%gl_GlobalInvocationID = OpVariable %_ptr_Input_v3uint Input
+       %main = OpFunction %void None %3
+          %4 = OpLabel
+      %local = OpVariable %_ptr_Function_Tables Function
+         %15 = OpVariable %_ptr_Function_Tables_natural_logical Function
+         %16 = OpVariable %_ptr_Function_Tables Function
+         %25 = OpAccessChain %_ptr_PushConstant_Tables_natural %params %int_0
+         %26 = OpLoad %Tables_natural %25
+         %27 = OpCopyLogical %Tables_natural_logical %26
+               OpStore %15 %27
+         %30 = OpAccessChain %_ptr_Function_Table_natural_logical %15 %int_0
+         %32 = OpAccessChain %_ptr_Function__ptr_PhysicalStorageBuffer_float %30 %int_0
+         %33 = OpLoad %_ptr_PhysicalStorageBuffer_float %32
+         %36 = OpAccessChain %_ptr_Function_uint %30 %int_1
+         %37 = OpLoad %uint %36
+         %38 = OpCompositeConstruct %Table %33 %37
+         %39 = OpAccessChain %_ptr_Function_Table_natural_logical %15 %int_1
+         %40 = OpAccessChain %_ptr_Function__ptr_PhysicalStorageBuffer_float %39 %int_0
+         %41 = OpLoad %_ptr_PhysicalStorageBuffer_float %40
+         %42 = OpAccessChain %_ptr_Function_uint %39 %int_1
+         %43 = OpLoad %uint %42
+         %44 = OpCompositeConstruct %Table %41 %43
+         %45 = OpCompositeConstruct %Tables %38 %44
+               OpStore %local %45
+         %48 = OpAccessChain %_ptr_Function_Table %local %int_0
+         %49 = OpAccessChain %_ptr_Function_uint %48 %int_1
+         %51 = OpLoad %v3uint %gl_GlobalInvocationID
+         %54 = OpCompositeExtract %uint %51 1
+         %55 = OpIAdd %uint %54 %uint_1
+               OpStore %49 %55
+         %59 = OpAccessChain %_ptr_PushConstant__ptr_PhysicalStorageBuffer_float %params %int_1
+         %60 = OpLoad %v3uint %gl_GlobalInvocationID
+         %61 = OpCompositeExtract %uint %60 0
+         %62 = OpLoad %_ptr_PhysicalStorageBuffer_float %59
+         %63 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %62 %61
+         %64 = OpLoad %v3uint %gl_GlobalInvocationID
+         %65 = OpCompositeExtract %uint %64 0
+         %66 = OpFunctionCall %float %lookup %65
+         %92 = OpLoad %Tables %local
+         %93 = OpLoad %v3uint %gl_GlobalInvocationID
+         %94 = OpCompositeExtract %uint %93 0
+               OpStore %16 %92
+         %96 = OpFunctionCall %float %lookup_0 %16 %94
+        %120 = OpFAdd %float %66 %96
+               OpStore %63 %120 Aligned 4
+               OpReturn
+               OpFunctionEnd
+     %lookup = OpFunction %float DontInline %68
+         %69 = OpFunctionParameter %uint
+         %70 = OpLabel
+         %71 = OpAccessChain %_ptr_PushConstant_Tables_natural %params %int_0
+         %73 = OpAccessChain %_ptr_PushConstant_Table_natural %71 %int_0
+         %75 = OpAccessChain %_ptr_PushConstant_uint %73 %int_1
+         %76 = OpLoad %uint %75
+         %77 = OpUMod %uint %69 %76
+         %78 = OpAccessChain %_ptr_PushConstant__ptr_PhysicalStorageBuffer_float %73 %int_0
+         %79 = OpLoad %_ptr_PhysicalStorageBuffer_float %78
+         %80 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %79 %77
+         %81 = OpLoad %float %80 Aligned 4
+         %82 = OpAccessChain %_ptr_PushConstant_Table_natural %71 %int_1
+         %83 = OpAccessChain %_ptr_PushConstant_uint %82 %int_1
+         %84 = OpLoad %uint %83
+         %85 = OpUMod %uint %69 %84
+         %86 = OpAccessChain %_ptr_PushConstant__ptr_PhysicalStorageBuffer_float %82 %int_0
+         %87 = OpLoad %_ptr_PhysicalStorageBuffer_float %86
+         %88 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %87 %85
+         %89 = OpLoad %float %88 Aligned 4
+         %90 = OpFAdd %float %81 %89
+               OpReturnValue %90
+               OpFunctionEnd
+   %lookup_0 = OpFunction %float DontInline %98
+     %tables = OpFunctionParameter %_ptr_Function_Tables
+          %i = OpFunctionParameter %uint
+        %101 = OpLabel
+        %102 = OpAccessChain %_ptr_Function_Table %tables %int_0
+        %103 = OpAccessChain %_ptr_Function_uint %102 %int_1
+        %104 = OpLoad %uint %103
+        %105 = OpUMod %uint %i %104
+        %106 = OpAccessChain %_ptr_Function__ptr_PhysicalStorageBuffer_float %102 %int_0
+        %107 = OpLoad %_ptr_PhysicalStorageBuffer_float %106
+        %108 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %107 %105
+        %109 = OpLoad %float %108 Aligned 4
+        %110 = OpAccessChain %_ptr_Function_Table %tables %int_1
+        %111 = OpAccessChain %_ptr_Function_uint %110 %int_1
+        %112 = OpLoad %uint %111
+        %113 = OpUMod %uint %i %112
+        %114 = OpAccessChain %_ptr_Function__ptr_PhysicalStorageBuffer_float %110 %int_0
+        %115 = OpLoad %_ptr_PhysicalStorageBuffer_float %114
+        %116 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %115 %113
+        %117 = OpLoad %float %116 Aligned 4
+        %118 = OpFAdd %float %109 %117
+               OpReturnValue %118
+               OpFunctionEnd

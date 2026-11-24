@@ -1,0 +1,31 @@
+#pragma clang diagnostic ignored "-Wunused-variable"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+#include <metal_atomic>
+
+using namespace metal;
+
+struct AOVs_natural;
+
+struct Params_natural
+{
+    device AOVs_natural* aovs;
+    uint2 _imageSize;
+};
+
+struct AOVs_natural
+{
+    device float4* colorSplit;
+    uint flags;
+};
+
+kernel void main0(constant Params_natural& params [[buffer(0)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    uint _43 = gl_GlobalInvocationID.x + (params._imageSize.x * params._imageSize.y);
+    device float* record = reinterpret_cast<device float*>(&params.aovs->colorSplit[_43]);
+    float _45 = atomic_fetch_add_explicit((device atomic_float*)record, 1.0, memory_order_relaxed);
+    float _47 = atomic_fetch_add_explicit((device atomic_float*)&record[1], 2.0, memory_order_relaxed);
+    (reinterpret_cast<device uint*>(&params.aovs->colorSplit[_43]))[3] = gl_GlobalInvocationID.y;
+}
+

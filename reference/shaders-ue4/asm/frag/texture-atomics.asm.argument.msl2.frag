@@ -89,10 +89,12 @@ fragment main0_out main0(main0_in in [[stage_in]], constant spvDescriptorSetBuff
     float3 _101 = float3(_100.x, _100.y, _70.z);
     _101.z = 1.0;
     uint _103 = in.in_var_TEXCOORD0 * 5u;
+    float3 _106 = (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103].xyz;
     uint _107 = _103 + 1u;
-    if (all((*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_107].xy > _96.xy) && all((*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103].xyz < _101))
+    float4 _109 = (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_107];
+    if (all(_109.xy > _96.xy) && all(_106 < _101))
     {
-        float3 _121 = float3(0.5) * ((*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103].xyz + (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_107].xyz);
+        float3 _121 = float3(0.5) * (_106 + _109.xyz);
         float _122 = _96.x;
         float _123 = _96.y;
         spvUnsafeArray<float3, 8> _73;
@@ -106,6 +108,9 @@ fragment main0_out main0(main0_in in [[stage_in]], constant spvDescriptorSetBuff
         _73[5] = float3(_126, _123, 1.0);
         _73[6] = float3(_122, _129, 1.0);
         _73[7] = float3(_126, _129, 1.0);
+        float3 _145 = (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 2u].xyz;
+        float3 _149 = (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 3u].xyz;
+        float3 _153 = (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 4u].xyz;
         float3 _155;
         float3 _158;
         _155 = float3(-500000.0);
@@ -113,7 +118,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant spvDescriptorSetBuff
         for (int _160 = 0; _160 < 8; )
         {
             float3 _166 = _73[_160] - _121;
-            float3 _170 = float3(dot(_166, (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 2u].xyz), dot(_166, (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 3u].xyz), dot(_166, (*spvDescriptorSet0.CulledObjectBoxBounds)._m0[_103 + 4u].xyz));
+            float3 _170 = float3(dot(_166, _145), dot(_166, _149), dot(_166, _153));
             _155 = fast::max(_155, _170);
             _158 = fast::min(_158, _170);
             _160++;

@@ -21,7 +21,8 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     device main0_in* gl_in = &spvIn[min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1) * spvIndirectParams[0]];
     uint gl_InvocationID = gl_GlobalInvocationID.x % 4;
     uint gl_PrimitiveID = min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1);
-    if (gl_InvocationID == 0)
+    int _9 = gl_InvocationID;
+    if (_9 == 0)
     {
         spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[0] = half(2.0);
         spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[1] = half(3.0);
@@ -30,6 +31,6 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
         spvTessLevel[gl_PrimitiveID].insideTessellationFactor[0] = half(mix(float(spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[0]), float(spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[3]), 0.5));
         spvTessLevel[gl_PrimitiveID].insideTessellationFactor[1] = half(mix(float(spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[2]), float(spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[1]), 0.5));
     }
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    gl_out[_9].gl_Position = gl_in[_9].gl_Position;
 }
 

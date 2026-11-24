@@ -32,7 +32,8 @@ struct main0_patchIn
     const device main0_patchIn& patchIn = spvPatchIn[gl_PrimitiveID];
     float3 gl_TessCoord = float3(gl_TessCoordIn.x, gl_TessCoordIn.y, 0.0);
     float2 _202 = patchIn.vOutPatchPosBase + (gl_TessCoord.xy * _31.uPatchSize);
-    float2 _216 = mix(patchIn.vPatchLods.yx, patchIn.vPatchLods.zw, float2(gl_TessCoord.x));
+    float4 _209 = patchIn.vPatchLods;
+    float2 _216 = mix(_209.yx, _209.zw, float2(gl_TessCoord.x));
     float _223 = mix(_216.x, _216.y, gl_TessCoord.y);
     float _225 = floor(_223);
     float2 _125 = _202 * _31.uInvHeightmapSize;

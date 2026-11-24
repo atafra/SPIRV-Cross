@@ -122,8 +122,9 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     spvUnsafeArray<VertexOutput, 3> param = p;
     uint param_1 = i;
     HSOut flattenTemp = _hs_main(param, param_1);
-    gl_out[gl_InvocationID].gl_Position = flattenTemp.pos;
-    gl_out[gl_InvocationID]._entryPointOutput.uv = flattenTemp.uv;
+    uint _94 = gl_InvocationID;
+    gl_out[_94].gl_Position = flattenTemp.pos;
+    gl_out[_94]._entryPointOutput.uv = flattenTemp.uv;
     threadgroup_barrier(mem_flags::mem_device | mem_flags::mem_threadgroup);
     if (int(gl_InvocationID) == 0)
     {

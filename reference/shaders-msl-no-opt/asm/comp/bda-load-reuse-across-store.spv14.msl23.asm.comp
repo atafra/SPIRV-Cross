@@ -1,0 +1,52 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct Geometry_natural;
+struct Material_natural;
+
+struct Params_natural
+{
+    device Geometry_natural* geometries;
+    device Material_natural* materials;
+    device float* _output;
+};
+
+struct Geometry_natural
+{
+    device float3* positions;
+    uint materialID;
+};
+
+struct Material_natural
+{
+    float a;
+    float b;
+    packed_float3 c;
+};
+
+kernel void main0(constant Params_natural& params [[buffer(0)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    uint _42 = params.geometries[gl_GlobalInvocationID.x].materialID;
+    float _45;
+    _45 = 0.0;
+    float sum;
+    int i;
+    int _47 = 0;
+    for (;;)
+    {
+        if (!(_47 < 4))
+        {
+            break;
+        }
+        sum = _45 + ((params.materials[_42].a * float(_47)) + params.materials[_42].b);
+        params._output[(gl_GlobalInvocationID.x * 4u) + uint(_47)] = sum * params.materials[_42].c[1];
+        i = _47 + 1;
+        _45 = sum;
+        _47 = i;
+        continue;
+    }
+    params._output[gl_GlobalInvocationID.y] = _45 + params.materials[_42].c[0];
+}
+

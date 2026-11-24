@@ -16,7 +16,8 @@ struct main0_out
 fragment main0_out main0(const device SSBO& _13 [[buffer(0)]])
 {
     main0_out out = {};
-    out.FragColor = _13.v + _13.v;
+    float4 _24 = _13.v;
+    out.FragColor = _24 + _24;
     return out;
 }
 

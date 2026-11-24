@@ -1,0 +1,42 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct Params_natural
+{
+    device float* values;
+};
+
+static inline __attribute__((always_inline))
+bool isfinite0(float x)
+{
+    bool _39;
+    if (isinf(x))
+    {
+        _39 = true;
+    }
+    else
+    {
+        _39 = isnan(x);
+    }
+    return !_39;
+}
+
+kernel void main0(constant Params_natural& params [[buffer(0)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    float _27 = params.values[gl_GlobalInvocationID.x];
+    float _7;
+    if (isfinite0(_27))
+    {
+        _7 = _27;
+    }
+    else
+    {
+        _7 = 0.0;
+    }
+    params.values[gl_GlobalInvocationID.x] = _7;
+}
+

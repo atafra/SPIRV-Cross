@@ -15,6 +15,7 @@ struct SSBO
 
 kernel void main0(device SSBO2& _4 [[buffer(0)]], device SSBO& _6 [[buffer(1)]])
 {
-    _4.out_data[0] = fma(_6.in_data[0], _6.in_data[1], _6.in_data[1]);
+    float4 _23 = _6.in_data[1];
+    _4.out_data[0] = fma(_6.in_data[0], _23, _23);
 }
 

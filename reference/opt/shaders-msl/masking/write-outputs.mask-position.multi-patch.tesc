@@ -72,9 +72,10 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     device main0_patchOut& patchOut = spvPatchOut[gl_GlobalInvocationID.x / 4];
     uint gl_InvocationID = gl_GlobalInvocationID.x % 4;
     uint gl_PrimitiveID = min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1);
-    gl_out[gl_InvocationID].v0 = float4(1.0);
-    gl_out[gl_InvocationID].v0.z = 3.0;
-    if (gl_InvocationID == 0)
+    int _66 = gl_InvocationID;
+    gl_out[_66].v0 = float4(1.0);
+    gl_out[_66].v0.z = 3.0;
+    if (_66 == 0)
     {
         patchOut.v1[0] = float4(2.0);
         ((device float*)&patchOut.v1[0])[0u] = 3.0;
@@ -82,8 +83,8 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
         ((device float*)&patchOut.v1[1])[0u] = 5.0;
     }
     patchOut.v3 = float4(5.0);
-    gl_out_masked[gl_InvocationID].gl_Position = float4(10.0);
-    gl_out_masked[gl_InvocationID].gl_Position.z = 20.0;
-    gl_out[gl_InvocationID].gl_PointSize = 40.0;
+    gl_out_masked[_66].gl_Position = float4(10.0);
+    gl_out_masked[_66].gl_Position.z = 20.0;
+    gl_out[_66].gl_PointSize = 40.0;
 }
 

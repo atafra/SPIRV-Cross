@@ -1,0 +1,75 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct Table
+{
+    device float* dir;
+    uint size;
+};
+
+struct Tables
+{
+    Table a;
+    Table b;
+};
+
+struct Table_natural_logical
+{
+    device float* dir;
+    uint size;
+};
+
+struct Tables_natural_logical
+{
+    Table_natural_logical a;
+    Table_natural_logical b;
+};
+
+struct Table_natural
+{
+    device float* dir;
+    uint size;
+};
+
+struct Tables_natural
+{
+    Table_natural a;
+    Table_natural b;
+};
+
+struct Params_natural
+{
+    Tables_natural tables;
+    device float* _output;
+};
+
+static inline __attribute__((always_inline))
+float lookup(uint _69, constant Params_natural& params)
+{
+    return params.tables.a.dir[_69 % params.tables.a.size] + params.tables.b.dir[_69 % params.tables.b.size];
+}
+
+static inline __attribute__((always_inline))
+float lookup(thread const Tables& tables, uint i)
+{
+    return tables.a.dir[i % tables.a.size] + tables.b.dir[i % tables.b.size];
+}
+
+kernel void main0(constant Params_natural& params [[buffer(0)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    Tables_natural_logical _27;
+    _27.a.dir = params.tables.a.dir;
+    _27.a.size = params.tables.a.size;
+    _27.b.dir = params.tables.b.dir;
+    _27.b.size = params.tables.b.size;
+    Tables_natural_logical _15 = _27;
+    Tables local = Tables{ Table{ _15.a.dir, _15.a.size }, Table{ _15.b.dir, _15.b.size } };
+    local.a.size = gl_GlobalInvocationID.y + 1u;
+    Tables _16 = local;
+    params._output[gl_GlobalInvocationID.x] = lookup(gl_GlobalInvocationID.x, params) + lookup(_16, gl_GlobalInvocationID.x);
+}
+

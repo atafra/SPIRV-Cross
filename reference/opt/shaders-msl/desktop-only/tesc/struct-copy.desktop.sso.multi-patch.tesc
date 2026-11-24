@@ -25,7 +25,8 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     device main0_in* gl_in = &spvIn[min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1) * spvIndirectParams[0]];
     uint gl_InvocationID = gl_GlobalInvocationID.x % 4;
     uint gl_PrimitiveID = min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1);
-    gl_out[gl_InvocationID].vVertex = gl_in[gl_InvocationID].vInput;
+    int _18 = gl_InvocationID;
+    gl_out[_18].vVertex = gl_in[_18].vInput;
     spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[0] = half(1.0);
     spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[1] = half(2.0);
     spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[2] = half(3.0);

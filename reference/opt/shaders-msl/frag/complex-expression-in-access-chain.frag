@@ -33,7 +33,8 @@ fragment main0_out main0(main0_in in [[stage_in]], const device UBO& _34 [[buffe
 {
     main0_out out = {};
     int _40 = spvSMod(Buf.read(uint2(int2(gl_FragCoord.xy)), 0).x, 16);
-    out.FragColor = (_34.results[_40] + _34.results[_40]) + _34.results[(in.vIn * in.vIn) + (in.vIn2 * in.vIn2)];
+    float4 _43 = _34.results[_40];
+    out.FragColor = (_43 + _43) + _34.results[(in.vIn * in.vIn) + (in.vIn2 * in.vIn2)];
     return out;
 }
 

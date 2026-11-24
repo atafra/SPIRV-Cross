@@ -1,0 +1,90 @@
+; SPIR-V
+; Version: 1.4
+; Generator: Khronos Slang Compiler; 0
+; Bound: 53
+; Schema: 0
+               OpCapability PhysicalStorageBufferAddresses
+               OpCapability AtomicFloat32AddEXT
+               OpCapability Shader
+               OpExtension "SPV_KHR_physical_storage_buffer"
+               OpExtension "SPV_EXT_shader_atomic_float_add"
+               OpMemoryModel PhysicalStorageBuffer64 GLSL450
+               OpEntryPoint GLCompute %main "main" %params %gl_GlobalInvocationID
+               OpExecutionMode %main LocalSize 64 1 1
+               OpSource Slang 1
+               OpName %Params_natural "Params_natural"
+               OpMemberName %Params_natural 0 "aovs"
+               OpMemberName %Params_natural 1 "imageSize"
+               OpName %params "params"
+               OpName %record "record"
+               OpName %main "main"
+               OpName %AOVs_natural "AOVs_natural"
+               OpMemberName %AOVs_natural 0 "colorSplit"
+               OpMemberName %AOVs_natural 1 "flags"
+               OpDecorate %gl_GlobalInvocationID BuiltIn GlobalInvocationId
+               OpDecorate %_ptr_PhysicalStorageBuffer_v4float ArrayStride 16
+               OpDecorate %_ptr_PhysicalStorageBuffer_AOVs_natural ArrayStride 16
+               OpDecorate %Params_natural Block
+               OpMemberDecorate %Params_natural 0 Offset 0
+               OpMemberDecorate %Params_natural 1 Offset 8
+               OpDecorate %_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_v4float ArrayStride 8
+               OpDecorate %_ptr_PhysicalStorageBuffer_float ArrayStride 4
+               OpDecorate %_ptr_PhysicalStorageBuffer_uint ArrayStride 4
+               OpMemberDecorate %AOVs_natural 0 Offset 0
+               OpMemberDecorate %AOVs_natural 1 Offset 8
+       %void = OpTypeVoid
+         %13 = OpTypeFunction %void
+       %uint = OpTypeInt 32 0
+     %v3uint = OpTypeVector %uint 3
+%_ptr_Input_v3uint = OpTypePointer Input %v3uint
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_PhysicalStorageBuffer_v4float = OpTypePointer PhysicalStorageBuffer %v4float
+               OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_AOVs_natural PhysicalStorageBuffer
+     %v2uint = OpTypeVector %uint 2
+%Params_natural = OpTypeStruct %_ptr_PhysicalStorageBuffer_AOVs_natural %v2uint
+%_ptr_PushConstant_Params_natural = OpTypePointer PushConstant %Params_natural
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+%_ptr_PushConstant_8 = OpTypePointer PushConstant %_ptr_PhysicalStorageBuffer_AOVs_natural
+%_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_v4float = OpTypePointer PhysicalStorageBuffer %_ptr_PhysicalStorageBuffer_v4float
+      %int_1 = OpConstant %int 1
+%_ptr_PushConstant_v2uint = OpTypePointer PushConstant %v2uint
+%_ptr_PhysicalStorageBuffer_float = OpTypePointer PhysicalStorageBuffer %float
+     %uint_1 = OpConstant %uint 1
+     %uint_0 = OpConstant %uint 0
+    %float_1 = OpConstant %float 1
+    %float_2 = OpConstant %float 2
+%_ptr_PhysicalStorageBuffer_uint = OpTypePointer PhysicalStorageBuffer %uint
+      %int_3 = OpConstant %int 3
+%AOVs_natural = OpTypeStruct %_ptr_PhysicalStorageBuffer_v4float %uint
+%_ptr_PhysicalStorageBuffer_AOVs_natural = OpTypePointer PhysicalStorageBuffer %AOVs_natural
+%gl_GlobalInvocationID = OpVariable %_ptr_Input_v3uint Input
+     %params = OpVariable %_ptr_PushConstant_Params_natural PushConstant
+       %main = OpFunction %void None %13
+         %31 = OpLabel
+         %32 = OpLoad %v3uint %gl_GlobalInvocationID
+         %33 = OpCompositeExtract %uint %32 0
+         %34 = OpAccessChain %_ptr_PushConstant_8 %params %int_0
+         %35 = OpLoad %_ptr_PhysicalStorageBuffer_AOVs_natural %34
+         %36 = OpAccessChain %_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_v4float %35 %int_0
+         %37 = OpLoad %_ptr_PhysicalStorageBuffer_v4float %36 Aligned 8
+         %38 = OpAccessChain %_ptr_PushConstant_v2uint %params %int_1
+         %39 = OpLoad %v2uint %38
+         %40 = OpCompositeExtract %uint %39 0
+         %41 = OpCompositeExtract %uint %39 1
+         %42 = OpIMul %uint %40 %41
+         %43 = OpIAdd %uint %33 %42
+         %44 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_v4float %37 %43
+     %record = OpBitcast %_ptr_PhysicalStorageBuffer_float %44
+         %45 = OpAtomicFAddEXT %float %record %uint_1 %uint_0 %float_1
+         %46 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_float %record %int_1
+         %47 = OpAtomicFAddEXT %float %46 %uint_1 %uint_0 %float_2
+         %48 = OpLoad %_ptr_PhysicalStorageBuffer_v4float %36 Aligned 8
+         %49 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_v4float %48 %43
+         %50 = OpBitcast %_ptr_PhysicalStorageBuffer_uint %49
+         %51 = OpPtrAccessChain %_ptr_PhysicalStorageBuffer_uint %50 %int_3
+         %52 = OpCompositeExtract %uint %32 1
+               OpStore %51 %52 Aligned 4
+               OpReturn
+               OpFunctionEnd

@@ -77,9 +77,10 @@ kernel void main0(uint3 gl_GlobalInvocationID [[thread_position_in_grid]], devic
     patchOut.p_v = float4(0.0);
     uint gl_InvocationID = gl_GlobalInvocationID.x % 4;
     uint gl_PrimitiveID = min(gl_GlobalInvocationID.x / 4, spvIndirectParams[1] - 1);
-    c[gl_InvocationID].v = float4(1.0);
+    int _17 = gl_InvocationID;
+    c[_17].v = float4(1.0);
     patchOut.p_v = float4(2.0);
-    gl_out[gl_InvocationID].gl_Position = float4(3.0);
-    gl_out[gl_InvocationID].gl_PointSize = 4.0;
+    gl_out[_17].gl_Position = float4(3.0);
+    gl_out[_17].gl_PointSize = 4.0;
 }
 
