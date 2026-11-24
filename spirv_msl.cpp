@@ -17629,6 +17629,16 @@ const std::unordered_set<std::string> &CompilerMSL::get_illegal_func_names()
 		"float8",
 		"float16",
 		"signed",
+
+		// Metal Standard Library relational functions, which a function of the same signature
+		// makes ambiguous, as a compiler that implements them in SPIR-V emits them
+		"isfinite",
+		"isinf",
+		"isnan",
+		"isnormal",
+		"isordered",
+		"isunordered",
+		"signbit",
 	};
 
 	return illegal_func_names;
