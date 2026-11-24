@@ -597,6 +597,7 @@ struct SPIRType : IVariant
 		Sampler,
 		AccelerationStructure,
 		RayQuery,
+		HitObject,
 		CoopVecNV,
 
 		// Keep internal types at the end.

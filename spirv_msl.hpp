@@ -1031,6 +1031,8 @@ protected:
 	std::string ray_query_metadata_name(uint32_t id);
 	std::string ray_query_metadata_expression(uint32_t id);
 	bool ray_query_needs_metadata() const;
+	bool type_needs_ray_metadata(const SPIRType &type) const;
+	std::string hit_object_is_hit_expression(uint32_t id);
 	bool is_ray_tracing_ifb_stage() const;
 	uint32_t clone_ray_data_type(uint32_t type_id, bool force = false);
 	void localize_global_variables();
@@ -1332,6 +1334,7 @@ protected:
 
 	bool has_sampled_images = false;
 	bool uses_acceleration_structure_address = false, uses_ray_query_sbt = false, uses_ray_query_flags = false;
+	bool uses_hit_object_metadata = false;
 	std::string incoming_ray_payload_type;
 	std::unordered_map<uint32_t, uint32_t> ray_data_physical_types;
 	bool builtin_declaration = false; // Handle HLSL-style 0-based vertex/instance index.

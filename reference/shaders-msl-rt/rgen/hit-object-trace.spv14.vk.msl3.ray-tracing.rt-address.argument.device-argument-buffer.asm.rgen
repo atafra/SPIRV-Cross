@@ -1,0 +1,118 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+#if __METAL_VERSION__ >= 230
+#include <metal_raytracing>
+using namespace metal::raytracing;
+#endif
+
+using namespace metal;
+
+struct spvHitObjectMetadata { float tmax; uint flags; uint state; };
+
+intersection_params spvMakeIntersectionParams(uint flags)
+{
+    intersection_params ip;
+    if ((flags & 1) != 0)
+        ip.force_opacity(forced_opacity::opaque);
+    if ((flags & 2) != 0)
+        ip.force_opacity(forced_opacity::non_opaque);
+    if ((flags & 4) != 0)
+        ip.accept_any_intersection(true);
+    if ((flags & 16) != 0)
+        ip.set_triangle_cull_mode(triangle_cull_mode::back);
+    if ((flags & 32) != 0)
+        ip.set_triangle_cull_mode(triangle_cull_mode::front);
+    if ((flags & 64) != 0)
+        ip.set_opacity_cull_mode(opacity_cull_mode::opaque);
+    if ((flags & 128) != 0)
+        ip.set_opacity_cull_mode(opacity_cull_mode::non_opaque);
+    if ((flags & 256) != 0)
+        ip.set_geometry_cull_mode(geometry_cull_mode::triangle);
+    if ((flags & 512) != 0)
+        ip.set_geometry_cull_mode(geometry_cull_mode::bounding_box);
+    return ip;
+}
+
+struct Payload
+{
+    uint unused;
+};
+
+struct BuiltInTriangleIntersectionAttributes
+{
+    float2 barycentrics;
+};
+
+struct spvDescriptorSetBuffer0
+{
+    device const ulong* scene [[id(0)]];
+    texture2d<float, access::write> image [[id(1)]];
+};
+
+[[visible]] void main0(uint3 spvLaunchId, uint3 spvLaunchSize, SPV_RAY_CONTEXT_ARGS(void))
+{
+    const device spvDescriptorSetBuffer0& spvDescriptorSet0 = *reinterpret_cast<const device spvDescriptorSetBuffer0*>(spvRayState.dispatch->descriptorSetAddresses[0]);
+    float3 _34 = float3(float2(spvLaunchId.xy), 0.0);
+    Payload p = Payload{ 0u };
+    raytracing::intersection_query<raytracing::instancing, raytracing::triangle_data> opaque; spvHitObjectMetadata _8_rayQueryMetadata = {};
+    _8_rayQueryMetadata.tmax = 100.0;
+    _8_rayQueryMetadata.flags = 1u;
+    _8_rayQueryMetadata.state = 1u;
+    opaque.reset(raytracing::ray(_34, float3(0.0, 0.0, 1.0), 0.0, 100.0), *(device const raytracing::acceleration_structure<raytracing::instancing>*)spvDescriptorSet0.scene, 255u, spvMakeIntersectionParams(1u));
+    opaque.next();
+    p = p;
+    raytracing::intersection_query<raytracing::instancing, raytracing::triangle_data> _any; spvHitObjectMetadata _9_rayQueryMetadata = {};
+    _9_rayQueryMetadata.tmax = 100.0;
+    _9_rayQueryMetadata.flags = 0u;
+    _9_rayQueryMetadata.state = 1u;
+    _any.reset(raytracing::ray(_34, float3(0.0, 0.0, 1.0), 0.0, 100.0), *(device const raytracing::acceleration_structure<raytracing::instancing>*)spvDescriptorSet0.scene, 255u, spvMakeIntersectionParams(0u));
+    while (_any.next())
+    {
+        if (_any.get_candidate_intersection_type() == raytracing::intersection_type::triangle)
+            _any.commit_triangle_intersection();
+    }
+    float4 result = float4(0.0);
+    bool _92 = bool((_8_rayQueryMetadata.state != 0u && opaque.get_committed_intersection_type() != raytracing::intersection_type::none));
+    BuiltInTriangleIntersectionAttributes t;
+    if (_92)
+    {
+        t.barycentrics = opaque.get_committed_triangle_barycentric_coord();
+        uint _100 = uint(opaque.get_committed_primitive_id());
+        uint _101 = uint(opaque.get_committed_user_instance_id());
+        uint _103 = uint(opaque.get_committed_instance_id());
+        uint _105 = uint(opaque.get_committed_geometry_id());
+        uint _107 = uint(opaque.is_committed_triangle_front_facing() ? 0xfeu : 0xffu);
+        float2 _110 = t.barycentrics * float((((_100 + _101) + _103) + _105) + _107);
+        result.x = _110.x;
+        result.y = _110.y;
+        float3 _origin = float3(opaque.get_world_space_ray_origin());
+        float _tmin = float(opaque.get_ray_min_distance());
+        float3 _direction = float3(opaque.get_world_space_ray_direction());
+        float _tmax = float((_8_rayQueryMetadata.state != 0u && opaque.get_committed_intersection_type() != raytracing::intersection_type::none) ? opaque.get_committed_distance() : _8_rayQueryMetadata.tmax);
+        result.z = _tmax;
+        float4x3 _126 = float4x3(opaque.get_committed_object_to_world_transform());
+        float4x3 _130 = float4x3(opaque.get_committed_world_to_object_transform());
+        result.w = (float3(1.0) * _126).x + (float3(1.0) * _130).y;
+    }
+    bool _136 = bool(_9_rayQueryMetadata.state != 0u && !((_9_rayQueryMetadata.state != 0u && _any.get_committed_intersection_type() != raytracing::intersection_type::none)));
+    if (_136)
+    {
+        float3 _origin_1 = float3(_any.get_world_space_ray_origin());
+        float _tmin_1 = float(_any.get_ray_min_distance());
+        float3 _direction_1 = float3(_any.get_world_space_ray_direction());
+        float _tmax_1 = float((_9_rayQueryMetadata.state != 0u && _any.get_committed_intersection_type() != raytracing::intersection_type::none) ? _any.get_committed_distance() : _9_rayQueryMetadata.tmax);
+        float3 _origin_2 = float3(_any.get_world_space_ray_origin());
+        float _tmin_2 = float(_any.get_ray_min_distance());
+        float3 _direction_2 = float3(_any.get_world_space_ray_direction());
+        float _tmax_2 = float((_9_rayQueryMetadata.state != 0u && _any.get_committed_intersection_type() != raytracing::intersection_type::none) ? _any.get_committed_distance() : _9_rayQueryMetadata.tmax);
+        float3 _origin_3 = float3(_any.get_world_space_ray_origin());
+        float _tmin_3 = float(_any.get_ray_min_distance());
+        float3 _direction_3 = float3(_any.get_world_space_ray_direction());
+        float _tmax_3 = float((_9_rayQueryMetadata.state != 0u && _any.get_committed_intersection_type() != raytracing::intersection_type::none) ? _any.get_committed_distance() : _9_rayQueryMetadata.tmax);
+        result.z += (_tmax_1 + dot(_origin_2, _direction_3));
+    }
+    spvDescriptorSet0.image.write(result, uint2(spvLaunchId.xy));
+}
+

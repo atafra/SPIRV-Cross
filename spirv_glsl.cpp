@@ -17712,6 +17712,9 @@ string CompilerGLSL::type_to_glsl(const SPIRType &type, uint32_t id)
 	case SPIRType::RayQuery:
 		return "rayQueryEXT";
 
+	case SPIRType::HitObject:
+		return "hitObjectEXT";
+
 	case SPIRType::Tensor:
 		if (type.ext.tensor.rank == 0)
 			SPIRV_CROSS_THROW("GLSL tensors must have a Rank.");

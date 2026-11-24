@@ -285,6 +285,14 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 			// There are various getters in ray query, but they are considered pure.
 			return false;
 
+		// A hit object is written by what records it, and its attributes are read into a variable.
+		case OpHitObjectTraceRayEXT:
+		case OpHitObjectRecordEmptyEXT:
+		case OpHitObjectGetAttributesEXT:
+		case OpReorderThreadWithHitObjectEXT:
+		case OpReorderThreadWithHintEXT:
+			return false;
+
 			// OpExtInst is potentially impure depending on extension, but GLSL builtins are at least pure.
 
 		case OpDemoteToHelperInvocationEXT:
@@ -3551,7 +3559,9 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::id_is_phi_or_ray_query(uint32_
 	if (id >= compiler.get_current_id_bound())
 		return false;
 	auto *var = compiler.maybe_get<SPIRVariable>(id);
-	return var && (var->phi_variable || compiler.get<SPIRType>(var->basetype).basetype == SPIRType::RayQuery);
+	// A hit object is an intersection query in MSL, where a ray query is one.
+	return var && (var->phi_variable || compiler.get<SPIRType>(var->basetype).basetype == SPIRType::RayQuery ||
+	               compiler.get<SPIRType>(var->basetype).basetype == SPIRType::HitObject);
 }
 
 bool Compiler::AnalyzeVariableScopeAccessHandler::id_is_potential_temporary(uint32_t id) const

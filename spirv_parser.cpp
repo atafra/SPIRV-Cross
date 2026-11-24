@@ -997,6 +997,14 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
+	case OpTypeHitObjectEXT:
+	{
+		uint32_t id = ops[0];
+		auto &type = set<SPIRType>(id, op);
+		type.basetype = SPIRType::HitObject;
+		break;
+	}
+
 	case OpTypeTensorARM:
 	{
 		uint32_t id = ops[0];

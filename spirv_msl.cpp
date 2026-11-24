@@ -1994,6 +1994,10 @@ void CompilerMSL::preprocess_op_codes()
 	}
 	if (ray_query_needs_metadata())
 		add_typedef_line("struct spvRayQueryMetadata { device const ulong* accelerationStructure; uint flags; };");
+	// What a hit object has that the intersection query that it is does not tell: where its ray was traced
+	// to, with which flags, and whether it was traced at all
+	if (uses_hit_object_metadata)
+		add_typedef_line("struct spvHitObjectMetadata { float tmax; uint flags; uint state; };");
 
 	if (preproc.uses_cooperative_matrix)
 	{
@@ -2131,6 +2135,16 @@ void CompilerMSL::localize_global_variables()
 			}
 		}
 	}
+	// The attributes of a hit object are read into a variable that only the shader itself accesses.
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t id, SPIRVariable &var) {
+		if (var.storage == StorageClassHitObjectAttributeEXT)
+		{
+			entry_func.add_local_variable(id);
+			var.storage = StorageClassPrivate;
+			get<SPIRType>(var.basetype).storage = StorageClassPrivate;
+		}
+	});
+
 	auto iter = global_variables.begin();
 	while (iter != global_variables.end())
 	{
@@ -10020,6 +10034,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		auto &load_type = get<SPIRType>(ops[0]);
 		if (!load_type.pointer && load_type.basetype == SPIRType::RayQuery)
 			SPIRV_CROSS_THROW("MSL cannot copy ray query objects.");
+		if (!load_type.pointer && load_type.basetype == SPIRType::HitObject)
+			SPIRV_CROSS_THROW("MSL cannot copy hit objects.");
 		uint32_t id = ops[1];
 		uint32_t ptr = ops[2];
 		if (is_tessellation_shader())
@@ -10687,6 +10703,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		auto &value_type = expression_type(ops[1]);
 		if (!value_type.pointer && value_type.basetype == SPIRType::RayQuery)
 			SPIRV_CROSS_THROW("MSL cannot copy ray query objects.");
+		if (!value_type.pointer && value_type.basetype == SPIRType::HitObject)
+			SPIRV_CROSS_THROW("MSL cannot copy hit objects.");
 		const auto &type = expression_type(ops[0]);
 
 		if (is_out_of_bounds_tessellation_level(ops[0]))
@@ -11036,6 +11054,120 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		emit_op(ops[0], ops[1], join(to_expression(ops[2]), ".next()"), false);
 		break;
 	}
+
+	// A hit object is an intersection query that has traced its ray to the closest hit, with what such a
+	// query does not tell kept next to it where the shader asks for it (see spvHitObjectMetadata). A
+	// candidate that is not opaque is a hit: an any-hit shader would have to run for it to be anything
+	// else, and the shaders of a pipeline only run for a hit object that is executed, which is not
+	// supported. Bounding boxes have no intersection shader to hit them by, likewise.
+	case OpHitObjectTraceRayEXT:
+	{
+		flush_variable_declaration(ops[0]);
+		register_write(ops[0]);
+		add_spv_func_and_recompile(SPVFuncImplRayQueryIntersectionParams);
+		auto hit_object = to_expression(ops[0]);
+		if (uses_hit_object_metadata)
+		{
+			auto metadata = ray_query_metadata_expression(ops[0]);
+			statement(metadata, ".tmax = ", to_expression(ops[10]), ";");
+			statement(metadata, ".flags = ", to_expression(ops[2]), ";");
+			statement(metadata, ".state = 1u;");
+		}
+		statement(hit_object, ".reset(raytracing::ray(", to_expression(ops[7]), ", ", to_expression(ops[9]), ", ",
+		          to_expression(ops[8]), ", ", to_expression(ops[10]), "), ",
+		          msl_options.acceleration_structure_descriptor_as_address ?
+		              "*(device const raytracing::acceleration_structure<raytracing::instancing>*)" : "",
+		          to_expression(ops[1]), ", ", to_expression(ops[3]),
+		          ", spvMakeIntersectionParams(", to_expression(ops[2]), "));");
+		// A ray that takes every triangle for opaque has none for a candidate, and ends with one step.
+		auto *ray_flags = maybe_get<SPIRConstant>(ops[2]);
+		if (ray_flags && !ray_flags->specialization && (ray_flags->scalar() & RayFlagsOpaqueKHRMask) != 0)
+		{
+			statement(hit_object, ".next();");
+		}
+		else
+		{
+			statement("while (", hit_object, ".next())");
+			begin_scope();
+			statement("if (", hit_object,
+			          ".get_candidate_intersection_type() == raytracing::intersection_type::triangle)");
+			statement("    ", hit_object, ".commit_triangle_intersection();");
+			end_scope();
+		}
+		break;
+	}
+
+	case OpHitObjectRecordEmptyEXT:
+		flush_variable_declaration(ops[0]);
+		register_write(ops[0]);
+		statement(ray_query_metadata_expression(ops[0]), ".state = 0u;");
+		break;
+
+	// Metal does not reorder the threads of a kernel, and the hint to do it is no more than one.
+	case OpReorderThreadWithHitObjectEXT:
+	case OpReorderThreadWithHintEXT:
+		break;
+
+#define MSL_HIT_OBJECT_OP(op, expr)                                                                \
+	case OpHitObject##op##EXT:                                                                     \
+		flush_variable_declaration(ops[2]);                                                        \
+		emit_op(ops[0], ops[1], join(type_to_glsl(get<SPIRType>(ops[0])), "(", expr, ")"), false); \
+		break
+#define MSL_HIT_OBJECT_GET_OP(op, msl_op) MSL_HIT_OBJECT_OP(op, join(to_expression(ops[2]), "." #msl_op "()"))
+
+		MSL_HIT_OBJECT_OP(IsEmpty, join(ray_query_metadata_expression(ops[2]), ".state == 0u"));
+		MSL_HIT_OBJECT_OP(IsMiss, join(ray_query_metadata_expression(ops[2]), ".state != 0u && !(",
+		                               hit_object_is_hit_expression(ops[2]), ")"));
+		MSL_HIT_OBJECT_OP(IsHit, hit_object_is_hit_expression(ops[2]));
+		MSL_HIT_OBJECT_OP(GetRayFlags, join(ray_query_metadata_expression(ops[2]), ".flags"));
+		// The ray of a hit ends at it, and that of a miss where it was traced to
+		MSL_HIT_OBJECT_OP(GetRayTMax, join(hit_object_is_hit_expression(ops[2]), " ? ", to_expression(ops[2]),
+		                                   ".get_committed_distance() : ",
+		                                   ray_query_metadata_expression(ops[2]), ".tmax"));
+		MSL_HIT_OBJECT_OP(GetHitKind, join(to_expression(ops[2]),
+		                                   ".is_committed_triangle_front_facing() ? 0xfeu : 0xffu"));
+		MSL_HIT_OBJECT_GET_OP(GetWorldRayOrigin, get_world_space_ray_origin);
+		MSL_HIT_OBJECT_GET_OP(GetWorldRayDirection, get_world_space_ray_direction);
+		MSL_HIT_OBJECT_GET_OP(GetRayTMin, get_ray_min_distance);
+		MSL_HIT_OBJECT_GET_OP(GetInstanceId, get_committed_instance_id);
+		MSL_HIT_OBJECT_GET_OP(GetInstanceCustomIndex, get_committed_user_instance_id);
+		MSL_HIT_OBJECT_GET_OP(GetPrimitiveIndex, get_committed_primitive_id);
+		MSL_HIT_OBJECT_GET_OP(GetGeometryIndex, get_committed_geometry_id);
+		MSL_HIT_OBJECT_GET_OP(GetObjectRayOrigin, get_committed_ray_origin);
+		MSL_HIT_OBJECT_GET_OP(GetObjectRayDirection, get_committed_ray_direction);
+		MSL_HIT_OBJECT_GET_OP(GetObjectToWorld, get_committed_object_to_world_transform);
+		MSL_HIT_OBJECT_GET_OP(GetWorldToObject, get_committed_world_to_object_transform);
+#undef MSL_HIT_OBJECT_GET_OP
+#undef MSL_HIT_OBJECT_OP
+
+	// The attributes of a triangle are its barycentric coordinates, which lead what they are read into
+	case OpHitObjectGetAttributesEXT:
+	{
+		flush_variable_declaration(ops[0]);
+		flush_variable_declaration(ops[1]);
+		register_write(ops[1]);
+		auto &attribute_type = get<SPIRType>(get_variable_data_type_id(get<SPIRVariable>(ops[1])));
+		statement(to_expression(ops[1]),
+		          attribute_type.basetype == SPIRType::Struct ? join(".", to_member_name(attribute_type, 0)) : "",
+		          " = ", to_expression(ops[0]), ".get_committed_triangle_barycentric_coord();");
+		break;
+	}
+
+	case OpHitObjectExecuteShaderEXT:
+	case OpHitObjectReorderExecuteShaderEXT:
+	case OpHitObjectTraceReorderExecuteEXT:
+	case OpHitObjectTraceMotionReorderExecuteEXT:
+		SPIRV_CROSS_THROW("Executing the shaders of a hit object is not supported in MSL.");
+	case OpHitObjectTraceRayMotionEXT:
+	case OpHitObjectRecordMissEXT:
+	case OpHitObjectRecordMissMotionEXT:
+	case OpHitObjectRecordFromQueryEXT:
+	case OpHitObjectSetShaderBindingTableRecordIndexEXT:
+	case OpHitObjectGetShaderBindingTableRecordIndexEXT:
+	case OpHitObjectGetShaderRecordBufferHandleEXT:
+	case OpHitObjectGetCurrentTimeEXT:
+	case OpHitObjectGetIntersectionTriangleVertexPositionsEXT:
+		SPIRV_CROSS_THROW("This hit object instruction is not supported in MSL.");
 #define MSL_RAY_QUERY_IS_CANDIDATE get<SPIRConstant>(ops[3]).scalar_i32() == 0
 
 #define MSL_RAY_QUERY_GET_OP(op, msl_op)                                                   \
@@ -14029,7 +14161,7 @@ string CompilerMSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_
 	{
 		arg_str += ", " + to_expression(var_id) + "_atomic";
 	}
-	if (type.basetype == SPIRType::RayQuery && ray_query_needs_metadata())
+	if (type_needs_ray_metadata(type))
 		arg_str += join(", ", ray_query_metadata_expression(var_id ? var_id : id));
 	return arg_str;
 }
@@ -15414,8 +15546,10 @@ bool CompilerMSL::is_sample_rate() const
 
 bool CompilerMSL::is_intersection_query() const
 {
+	// A hit object is traced as an intersection query is
 	auto &caps = get_declared_capabilities();
-	return std::find(caps.begin(), caps.end(), CapabilityRayQueryKHR) != caps.end();
+	return std::find(caps.begin(), caps.end(), CapabilityRayQueryKHR) != caps.end() ||
+	       std::find(caps.begin(), caps.end(), CapabilityShaderInvocationReorderEXT) != caps.end();
 }
 
 void CompilerMSL::append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<string> &arglist)
@@ -17264,12 +17398,13 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 		decl += join(", ", cv_flags, "device atomic_", type_to_glsl(get<SPIRType>(var_type.image.type), 0));
 		decl += "* " + to_expression(name_id) + "_atomic";
 	}
-	if (type.basetype == SPIRType::RayQuery && ray_query_needs_metadata())
+	if (type_needs_ray_metadata(type))
 	{
 		auto array = type_to_array_glsl(type, name_id);
+		const char *metadata = type.basetype == SPIRType::HitObject ? "spvHitObjectMetadata" : "spvRayQueryMetadata";
 		decl += array.empty() ?
-		            join(", thread spvRayQueryMetadata& ", ray_query_metadata_name(name_id)) :
-		            join(", thread spvRayQueryMetadata (&", ray_query_metadata_name(name_id), ")", array);
+		            join(", thread ", metadata, "& ", ray_query_metadata_name(name_id)) :
+		            join(", thread ", metadata, " (&", ray_query_metadata_name(name_id), ")", array);
 	}
 	is_using_builtin_array = false;
 
@@ -17973,6 +18108,10 @@ string CompilerMSL::type_to_glsl(const SPIRType &type, uint32_t id, bool member)
 		if (member)
 			SPIRV_CROSS_THROW("MSL does not allow intersection_query as a structure or union member.");
 		return "raytracing::intersection_query<raytracing::instancing, raytracing::triangle_data>";
+	case SPIRType::HitObject:
+		if (member)
+			SPIRV_CROSS_THROW("MSL does not allow intersection_query as a structure or union member.");
+		return "raytracing::intersection_query<raytracing::instancing, raytracing::triangle_data>";
 	case SPIRType::MeshGridProperties:
 		return "mesh_grid_properties";
 
@@ -18042,6 +18181,7 @@ string CompilerMSL::type_to_array_glsl(const SPIRType &type, uint32_t variable_i
 	case SPIRType::AtomicCounter:
 	case SPIRType::ControlPointArray:
 	case SPIRType::RayQuery:
+	case SPIRType::HitObject:
 		return CompilerGLSL::type_to_array_glsl(type, variable_id);
 	case SPIRType::AccelerationStructure:
 		if (msl_options.acceleration_structure_descriptor_as_address && variable_id && !type.array.empty())
@@ -18142,6 +18282,9 @@ std::string CompilerMSL::variable_decl(const SPIRType &type, const std::string &
 	auto declaration = CompilerGLSL::variable_decl(type, name, id);
 	if (type.basetype == SPIRType::RayQuery && ray_query_needs_metadata())
 		declaration += join("; spvRayQueryMetadata ", ray_query_metadata_name(id), type_to_array_glsl(type, id));
+	// A hit object is empty until it is recorded
+	if (type.basetype == SPIRType::HitObject && uses_hit_object_metadata)
+		declaration += join("; spvHitObjectMetadata ", ray_query_metadata_name(id), type_to_array_glsl(type, id), " = {}");
 	return declaration;
 }
 
@@ -19870,6 +20013,13 @@ bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, ui
 	case OpConvertUToAccelerationStructureKHR: self.uses_acceleration_structure_address = true; break;
 	case OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR: self.uses_ray_query_sbt = true; break;
 	case OpRayQueryGetRayFlagsKHR: self.uses_ray_query_flags = true; break;
+	case OpHitObjectRecordEmptyEXT:
+	case OpHitObjectIsEmptyEXT:
+	case OpHitObjectIsMissEXT:
+	case OpHitObjectGetRayFlagsEXT:
+	case OpHitObjectGetRayTMaxEXT:
+		self.uses_hit_object_metadata = true;
+		break;
 	case OpIgnoreIntersectionNV:
 	case OpTerminateRayNV:
 	case OpTraceNV:
@@ -21899,6 +22049,21 @@ string CompilerMSL::additional_fixed_sample_mask_str() const
 bool CompilerMSL::ray_query_needs_metadata() const
 {
 	return uses_ray_query_flags || (uses_ray_query_sbt && msl_options.acceleration_structure_descriptor_as_address);
+}
+
+bool CompilerMSL::type_needs_ray_metadata(const SPIRType &type) const
+{
+	return (type.basetype == SPIRType::RayQuery && ray_query_needs_metadata()) ||
+	       (type.basetype == SPIRType::HitObject && uses_hit_object_metadata);
+}
+
+// A hit object that was traced has a hit where its intersection query has committed one
+string CompilerMSL::hit_object_is_hit_expression(uint32_t id)
+{
+	auto committed =
+	    join(to_expression(id), ".get_committed_intersection_type() != raytracing::intersection_type::none");
+	return uses_hit_object_metadata ? join("(", ray_query_metadata_expression(id), ".state != 0u && ", committed, ")") :
+	                                  join("(", committed, ")");
 }
 
 bool CompilerMSL::is_ray_tracing_ifb_stage() const
