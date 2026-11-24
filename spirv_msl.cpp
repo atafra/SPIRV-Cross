@@ -1733,6 +1733,7 @@ string CompilerMSL::compile()
 	backend.allow_truncated_access_chain = true;
 	backend.comparison_image_samples_scalar = true;
 	backend.native_pointers = true;
+	backend.tracks_writable_memory_load_usage = true;
 	backend.nonuniform_qualifier = "";
 	backend.support_small_type_sampling_result = true;
 	backend.force_merged_mesh_block = false;

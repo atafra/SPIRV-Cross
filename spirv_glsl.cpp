@@ -13233,6 +13233,18 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// we should avoid emitting the same code over and over and lower the result to a temporary.
 		bool usage_tracking = flattened && (type.basetype == SPIRType::Struct || (type.columns > 1));
 
+		// A load that is forwarded to where it is used is a load again there. Two loads from memory
+		// that the shader can write are not merged across a store that might alias it, which a
+		// compiler rarely tells apart, so where the backend says so, such a load that is used more
+		// than once becomes a temporary.
+		if (backend.tracks_writable_memory_load_usage && !usage_tracking && !type_is_opaque_value(type))
+		{
+			// Not the storage of the variable that a chain starts from, as that can hold a pointer
+			auto storage = expression_type(ptr).storage;
+			usage_tracking = storage == StorageClassPhysicalStorageBuffer || storage == StorageClassStorageBuffer ||
+			                 get_expression_effective_storage_class(ptr) == StorageClassStorageBuffer;
+		}
+
 		SPIRExpression *e = nullptr;
 		if (!forward && expression_is_non_value_type_array(result_type, ptr))
 		{

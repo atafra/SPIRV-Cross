@@ -685,6 +685,7 @@ protected:
 		bool implicit_c_integer_promotion_rules = false;
 		bool supports_spec_constant_array_size = true;
 		bool requires_phi_undef_zero_init = false;
+		bool tracks_writable_memory_load_usage = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
