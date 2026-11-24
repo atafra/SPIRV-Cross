@@ -20558,7 +20558,14 @@ void CompilerGLSL::emit_copy_logical_type(uint32_t lhs_id, uint32_t lhs_type_id,
 			suppressed_usage_tracking.insert(rhs_id);
 		}
 
-		emit_store_statement(lhs_id, rhs_id);
+		// A physical pointer is a value that is copied, not a location that is stored through
+		if (is_pointer)
+		{
+			statement(to_expression(lhs_id), " = ", to_unpacked_expression(rhs_id), ";");
+			register_write(lhs_id);
+		}
+		else
+			emit_store_statement(lhs_id, rhs_id);
 	}
 }
 
