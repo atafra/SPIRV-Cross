@@ -356,6 +356,11 @@ public:
 		uint32_t ray_tracing_max_hit_attribute_size = 0;
 		bool ray_tracing_any_hit_ifb = false, ray_tracing_intersection_ifb = false;
 
+		// Forces the functions of the shader to be inlined where they are called. Otherwise they
+		// are static, and the Metal compiler decides, which for a large shader can spill far less.
+		// The helper functions that SPIRV-Cross adds are always inlined.
+		bool force_inline_functions = true;
+
 		// Defines Metal argument buffer tier levels.
 		// Uses same values as Metal MTLArgumentBuffersTier enumeration.
 		enum class ArgumentBuffersTier

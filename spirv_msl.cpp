@@ -12721,7 +12721,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		}
 		if (!template_decl.empty())
 			statement(template_decl, ">");
-		statement(force_inline);
+		statement(msl_options.force_inline_functions ? force_inline : "static");
 	}
 
 	auto &type = get<SPIRType>(func.return_type);
