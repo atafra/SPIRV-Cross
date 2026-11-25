@@ -361,6 +361,10 @@ public:
 		// The helper functions that SPIRV-Cross adds are always inlined.
 		bool force_inline_functions = true;
 
+		// Emits a device-scope atomic_thread_fence before loop exits (and ladder breaks) on MSL 3.2+
+		// to work around an Apple G17 (Apple10) stack-spill store-to-load ordering hazard across loop exits.
+		bool fence_loop_exits = false;
+
 		// Defines Metal argument buffer tier levels.
 		// Uses same values as Metal MTLArgumentBuffersTier enumeration.
 		enum class ArgumentBuffersTier
@@ -964,6 +968,7 @@ protected:
 	std::string type_to_glsl(const SPIRType &type, uint32_t id, bool member);
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	void emit_block_hints(const SPIRBlock &block) override;
+	void emit_loop_exit_fence() override;
 	void emit_ray_return(uint32_t action = 0);
 	void emit_mesh_entry_point();
 	void emit_mesh_outputs();

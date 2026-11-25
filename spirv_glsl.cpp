@@ -18561,6 +18561,7 @@ void CompilerGLSL::branch(BlockID from, BlockID to)
 		// The loop we're breaking out of must dominate the switch block, or there is no ladder breaking case.
 		if (is_loop_break(to))
 		{
+			bool has_ladder = false;
 			for (size_t n = current_emitting_switch_stack.size(); n; n--)
 			{
 				auto *current_emitting_switch = current_emitting_switch_stack[n - 1];
@@ -18576,9 +18577,18 @@ void CompilerGLSL::branch(BlockID from, BlockID to)
 					}
 
 					statement("_", current_emitting_switch->self, "_ladder_break = true;");
+					has_ladder = true;
 				}
 				else
 					break;
+			}
+			if (!has_ladder)
+			{
+				auto &from_block = get<SPIRBlock>(from);
+				BlockID lh = (ir.block_meta[from] & ParsedIR::BLOCK_META_LOOP_HEADER_BIT) ? from : from_block.loop_dominator;
+				if (processing_entry_point && lh != BlockID(SPIRBlock::NoDominator) &&
+				    get<SPIRBlock>(lh).loop_dominator == BlockID(SPIRBlock::NoDominator))
+					emit_loop_exit_fence();
 			}
 		}
 		statement("break;");
@@ -19633,6 +19643,9 @@ BlockID CompilerGLSL::emit_block_chain_inner(SPIRBlock &block)
 
 		if (block.need_ladder_break)
 		{
+			if (processing_entry_point && block.loop_dominator != BlockID(SPIRBlock::NoDominator) &&
+			    get<SPIRBlock>(block.loop_dominator).loop_dominator == BlockID(SPIRBlock::NoDominator))
+				emit_loop_exit_fence();
 			statement("if (_", block.self, "_ladder_break)");
 			begin_scope();
 			statement("break;");
@@ -20301,6 +20314,10 @@ void CompilerGLSL::emit_block_hints(const SPIRBlock &block)
 	default:
 		break;
 	}
+}
+
+void CompilerGLSL::emit_loop_exit_fence()
+{
 }
 
 void CompilerGLSL::preserve_alias_on_reset(uint32_t id)

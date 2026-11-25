@@ -21702,6 +21702,12 @@ void CompilerMSL::emit_block_hints(const SPIRBlock &)
 {
 }
 
+void CompilerMSL::emit_loop_exit_fence()
+{
+	if (msl_options.fence_loop_exits && msl_options.supports_msl_version(3, 2))
+		statement("atomic_thread_fence(mem_flags::mem_device, memory_order_seq_cst, thread_scope_device);");
+}
+
 void CompilerMSL::emit_ray_return(uint32_t action)
 {
 	if (action)
