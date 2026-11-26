@@ -1,0 +1,15 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct Out
+{
+    float _m0[1];
+};
+
+kernel void main0(device Out& _out [[buffer(0)]])
+{
+    _out._m0[0] = 1.0;
+}
+

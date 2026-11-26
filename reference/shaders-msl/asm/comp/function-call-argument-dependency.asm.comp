@@ -1,0 +1,26 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct Out
+{
+    float _m0[1];
+};
+
+static inline __attribute__((always_inline))
+float f(float _18)
+{
+    return _18 * _18;
+}
+
+kernel void main0(device Out& _out [[buffer(0)]])
+{
+    float x = 1.0;
+    float _22 = x;
+    x = 5.0;
+    _out._m0[0] = f(-_22);
+}
+
